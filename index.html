@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Game</title>
+  
+  <!-- Favicon (Tab Image) -->
+  <link rel="icon" type="image/png" href="NLC Profile.png">
+  
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: "Courier New", monospace;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2 {
+      margin: 20px;
+      text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+    }
+
+    #level-selection, #game-container {
+      display: none;
+    }
+
+    #level-selection button {
+      background-color: #111;
+      color: #0f0;
+      border: 2px solid #0f0;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 10px;
+      font-size: 1.2rem;
+      text-shadow: 0 0 5px #0f0;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    #level-selection button:hover {
+      background-color: #222;
+      box-shadow: 0 0 10px #0f0;
+    }
+
+    #game-grid {
+      display: grid;
+      grid-gap: 10px;
+      justify-content: center;
+      margin-top: 50px;
+    }
+
+    .button {
+      width: 80px;
+      height: 80px;
+      background-color: #111;
+      border: 2px solid #0f0;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 5px #0f0;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .button.active {
+      background-color: #0f0;
+      box-shadow: 0 0 20px #0f0, 0 0 30px #0f0;
+    }
+
+    .button.correct {
+      background-color: #0f0;
+      box-shadow: 0 0 20px #0f0;
+    }
+
+    .button.wrong {
+      background-color: #f00;
+      box-shadow: 0 0 20px #f00;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 1.2rem;
+    }
+
+    footer {
+      margin-top: 30px;
+      color: #0f0;
+      font-size: 0.9rem;
+      text-shadow: 0 0 5px #0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Memory Game</h1>
+  <div id="level-selection">
+    <h2>Select Your Difficulty</h2>
+    <button onclick="startGame(1)">Easy</button>
+    <button onclick="startGame(2)">Medium</button>
+    <button onclick="startGame(3)">Hard</button>
+  </div>
+  <div id="game-container">
+    <h2 id="level">Level: 1</h2>
+    <div id="game-grid"></div>
+    <div id="message">Watch carefully...</div>
+  </div>
+
+  <!-- Correct and Wrong Sound Effects -->
+  <audio id="correct-sound" src="Correct.mp3"></audio>
+  <audio id="wrong-sound" src="Wrong.mp3"></audio>
+
+  <footer>
+    <p>&copy; 2025 NerdJoe. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const gridContainer = document.getElementById("game-grid");
+    const message = document.getElementById("message");
+    const levelDisplay = document.getElementById("level");
+
+    const correctSound = document.getElementById("correct-sound");
+    const wrongSound = document.getElementById("wrong-sound");
+
+    let sequence = []; // Correct sequence
+    let playerSequence = []; // Player's input
+    let level = 1;
+    let gridSize, initialSequenceLength, lightingSpeed;
+
+    // Show level selection on page load
+    document.getElementById("level-selection").style.display = "block";
+
+    function startGame(difficulty) {
+      document.getElementById("level-selection").style.display = "none";
+      document.getElementById("game-container").style.display = "block";
+
+      // Set difficulty parameters
+      if (difficulty === 1) {
+        gridSize = 3; // 3x3 grid
+        initialSequenceLength = 3;
+        lightingSpeed = 800; // 800ms delay between lights
+      } else if (difficulty === 2) {
+        gridSize = 4; // 4x4 grid
+        initialSequenceLength = 4;
+        lightingSpeed = 600;
+      } else if (difficulty === 3) {
+        gridSize = 5; // 5x5 grid
+        initialSequenceLength = 5;
+        lightingSpeed = 400;
+      }
+
+      // Generate grid and start level
+      generateGrid();
+      startLevel();
+    }
+
+    function generateGrid() {
+      gridContainer.innerHTML = ""; // Clear existing grid
+      gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+      // Create grid buttons
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const button = document.createElement("div");
+        button.classList.add("button");
+        button.id = `btn-${i}`;
+        gridContainer.appendChild(button);
+
+        // Add event listener for player clicks
+        button.addEventListener("click", () => {
+          if (message.textContent === "Your turn!") {
+            playerSequence.push(i);
+            checkPlayerInput(i, button);
+          }
+        });
+      }
+    }
+
+    function startLevel() {
+      playerSequence = [];
+      sequence = Array.from({ length: initialSequenceLength + level - 1 }, () =>
+        Math.floor(Math.random() * gridSize * gridSize)
+      );
+
+      levelDisplay.textContent = `Level: ${level}`;
+      message.textContent = "Watch carefully...";
+      playSequence();
+    }
+
+    function playSequence() {
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < sequence.length) {
+          const button = document.getElementById(`btn-${sequence[i]}`);
+          button.classList.add("active");
+          setTimeout(() => button.classList.remove("active"), lightingSpeed / 2);
+          i++;
+        } else {
+          clearInterval(interval);
+          message.textContent = "Your turn!";
+        }
+      }, lightingSpeed);
+    }
+
+    function checkPlayerInput(index, button) {
+      const currentStep = playerSequence.length - 1;
+
+      if (playerSequence[currentStep] !== sequence[currentStep]) {
+        wrongSound.play(); // Play wrong sound
+        button.classList.add("wrong");
+        message.textContent = "Wrong! Restarting level...";
+        setTimeout(() => {
+          button.classList.remove("wrong");
+          startLevel();
+        }, 1000);
+        return;
+      }
+
+      correctSound.play(); // Play correct sound
+      button.classList.add("correct");
+      setTimeout(() => button.classList.remove("correct"), 300);
+
+      if (playerSequence.length === sequence.length) {
+        level++;
+        message.textContent = "Correct! Next level loading...";
+        setTimeout(startLevel, 1000);
+      }
+    }
+  </script>
+</body>
+</html>
