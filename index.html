@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Memory Game</title>
+  <title>Memory Match Challenge</title>
   
-  <!-- Favicon (Tab Image) -->
   <link rel="icon" type="image/png" href="NLC Profile.png">
   
   <style>
@@ -16,6 +15,7 @@
       text-align: center;
       margin: 0;
       padding: 0;
+      overflow-x: hidden;
     }
 
     h1, h2 {
@@ -23,11 +23,21 @@
       text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
     }
 
-    #level-selection, #game-container {
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    #start-screen, #level-selection, #game-container, #game-over {
       display: none;
     }
 
-    #level-selection button {
+    #start-screen.active, #level-selection.active, #game-container.active, #game-over.active {
+      display: block;
+    }
+
+    .btn {
       background-color: #111;
       color: #0f0;
       border: 2px solid #0f0;
@@ -40,19 +50,73 @@
       transition: background-color 0.3s, box-shadow 0.3s;
     }
 
-    #level-selection button:hover {
+    .btn:hover {
       background-color: #222;
       box-shadow: 0 0 10px #0f0;
     }
 
-    #game-grid {
+    /* Card matching game styles */
+    #memory-game {
       display: grid;
       grid-gap: 10px;
       justify-content: center;
-      margin-top: 50px;
+      margin: 30px auto;
+      perspective: 1000px;
     }
 
-    .button {
+    .memory-card {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+      cursor: pointer;
+    }
+
+    .memory-card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .memory-card.matched {
+      transform: rotateY(180deg);
+      box-shadow: 0 0 15px #0f0, 0 0 25px #0f0;
+    }
+
+    .card-front, .card-back {
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      position: absolute;
+      backface-visibility: hidden;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    .card-front {
+      background-color: #111;
+      border: 2px solid #0f0;
+      transform: rotateY(180deg);
+      font-size: 2em;
+    }
+
+    .card-back {
+      background-color: #222;
+      border: 2px solid #0f0;
+      box-shadow: 0 0 5px #0f0;
+    }
+
+    /* Sequence game styles */
+    #sequence-game {
+      display: grid;
+      grid-gap: 10px;
+      justify-content: center;
+      margin: 30px auto;
+    }
+
+    .sequence-button {
       width: 80px;
       height: 80px;
       background-color: #111;
@@ -63,24 +127,68 @@
       transition: background-color 0.3s, box-shadow 0.3s;
     }
 
-    .button.active {
+    .sequence-button.active {
       background-color: #0f0;
       box-shadow: 0 0 20px #0f0, 0 0 30px #0f0;
     }
 
-    .button.correct {
+    .sequence-button.correct {
       background-color: #0f0;
       box-shadow: 0 0 20px #0f0;
     }
 
-    .button.wrong {
+    .sequence-button.wrong {
       background-color: #f00;
       box-shadow: 0 0 20px #f00;
     }
 
-    #message {
-      margin-top: 20px;
+    #game-stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px auto;
+      max-width: 600px;
       font-size: 1.2rem;
+    }
+
+    #timer, #score, #moves {
+      background-color: #111;
+      border: 2px solid #0f0;
+      border-radius: 5px;
+      padding: 10px 20px;
+      text-shadow: 0 0 5px #0f0;
+      min-width: 120px;
+    }
+
+    #leaderboard {
+      margin: 30px auto;
+      max-width: 600px;
+    }
+
+    #leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    #leaderboard th, #leaderboard td {
+      border: 1px solid #0f0;
+      padding: 8px 12px;
+      text-align: center;
+    }
+
+    #leaderboard th {
+      background-color: #111;
+      text-shadow: 0 0 5px #0f0;
+    }
+
+    #leaderboard tr:nth-child(even) {
+      background-color: #111;
+    }
+
+    .message {
+      margin: 20px 0;
+      font-size: 1.2rem;
+      min-height: 30px;
     }
 
     footer {
@@ -89,107 +197,473 @@
       font-size: 0.9rem;
       text-shadow: 0 0 5px #0f0;
     }
+
+    /* Game type toggle */
+    #game-type-toggle {
+      margin: 20px auto;
+    }
+
+    .toggle-switch {
+      display: inline-block;
+      position: relative;
+      width: 280px;
+      height: 40px;
+      border: 2px solid #0f0;
+      border-radius: 20px;
+      background-color: #111;
+      box-shadow: 0 0 5px #0f0;
+      cursor: pointer;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 135px;
+      height: 36px;
+      border-radius: 18px;
+      background-color: #0f0;
+      box-shadow: 0 0 10px #0f0;
+      transition: left 0.3s;
+    }
+
+    .toggle-slider.right {
+      left: 143px;
+    }
+
+    .toggle-labels {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 100%;
+      font-size: 1rem;
+      text-shadow: 0 0 5px #0f0;
+    }
+
+    /* Animation for correct/incorrect */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .pulse {
+      animation: pulse 0.5s;
+    }
   </style>
 </head>
 <body>
-  <h1>Memory Game</h1>
-  <div id="level-selection">
-    <h2>Select Your Difficulty</h2>
-    <button onclick="startGame(1)">Easy</button>
-    <button onclick="startGame(2)">Medium</button>
-    <button onclick="startGame(3)">Hard</button>
+  <div class="container">
+    <h1>Memory Match Challenge</h1>
+    
+    <!-- Start Screen -->
+    <div id="start-screen" class="active">
+      <h2>Test Your Memory Skills</h2>
+      <p>Challenge yourself with two different memory games:<br>
+         Card Matching or Sequence Memorization</p>
+      <button class="btn" id="start-btn">Start Game</button>
+      <button class="btn" id="leaderboard-btn">View Leaderboard</button>
+    </div>
+    
+    <!-- Game Selection Screen -->
+    <div id="level-selection">
+      <div id="game-type-toggle">
+        <div class="toggle-switch">
+          <div class="toggle-slider"></div>
+          <div class="toggle-labels">
+            <span id="card-match-label">Card Matching</span>
+            <span id="sequence-label">Sequence Memory</span>
+          </div>
+        </div>
+      </div>
+      
+      <h2>Select Difficulty</h2>
+      <button class="btn" onclick="startGame(1)">Easy</button>
+      <button class="btn" onclick="startGame(2)">Medium</button>
+      <button class="btn" onclick="startGame(3)">Hard</button>
+    </div>
+    
+    <!-- Game Container -->
+    <div id="game-container">
+      <div id="game-stats">
+        <div id="timer">Time: 0s</div>
+        <div id="score">Score: 0</div>
+        <div id="moves">Moves: 0</div>
+      </div>
+      
+      <div id="memory-game"></div>
+      <div id="sequence-game"></div>
+      
+      <div class="message" id="message">Get ready...</div>
+      
+      <button class="btn" id="restart-btn">Restart</button>
+    </div>
+    
+    <!-- Game Over Screen -->
+    <div id="game-over">
+      <h2>Game Over</h2>
+      <div id="final-stats"></div>
+      <div id="player-name-input">
+        <p>Enter your name for the leaderboard:</p>
+        <input type="text" id="player-name" maxlength="15">
+        <button class="btn" id="save-score-btn">Save Score</button>
+      </div>
+      <button class="btn" id="play-again-btn">Play Again</button>
+      <button class="btn" id="view-leaderboard-btn">View Leaderboard</button>
+    </div>
+    
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard">
+      <h2>Leaderboard</h2>
+      <div class="toggle-switch">
+        <div class="toggle-slider"></div>
+        <div class="toggle-labels">
+          <span>Card Matching</span>
+          <span>Sequence Memory</span>
+        </div>
+      </div>
+      <table id="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Score</th>
+            <th>Difficulty</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+          <!-- Leaderboard entries will be added here -->
+        </tbody>
+      </table>
+      <button class="btn" id="back-to-menu-btn">Back to Menu</button>
+    </div>
   </div>
-  <div id="game-container">
-    <h2 id="level">Level: 1</h2>
-    <div id="game-grid"></div>
-    <div id="message">Watch carefully...</div>
-  </div>
-
-  <!-- Correct and Wrong Sound Effects -->
-  <audio id="correct-sound" src="Correct.mp3"></audio>
-  <audio id="wrong-sound" src="Wrong.mp3"></audio>
 
   <footer>
     <p>&copy; 2025 NerdJoe. All rights reserved.</p>
   </footer>
 
-  <script>
-    const gridContainer = document.getElementById("game-grid");
-    const message = document.getElementById("message");
-    const levelDisplay = document.getElementById("level");
+  <!-- Sound Effects -->
+  <audio id="correct-sound" src="Correct.mp3"></audio>
+  <audio id="wrong-sound" src="Wrong.mp3"></audio>
+  <audio id="match-sound" src="Match.mp3"></audio>
+  <audio id="flip-sound" src="Flip.mp3"></audio>
+  <audio id="game-over-sound" src="GameOver.mp3"></audio>
 
+  <script>
+    // DOM Elements
+    const startScreen = document.getElementById("start-screen");
+    const levelSelection = document.getElementById("level-selection");
+    const gameContainer = document.getElementById("game-container");
+    const gameOverScreen = document.getElementById("game-over");
+    const leaderboardScreen = document.getElementById("leaderboard");
+    
+    const memoryGame = document.getElementById("memory-game");
+    const sequenceGame = document.getElementById("sequence-game");
+    const message = document.getElementById("message");
+    
+    const timerDisplay = document.getElementById("timer");
+    const scoreDisplay = document.getElementById("score");
+    const movesDisplay = document.getElementById("moves");
+    const finalStats = document.getElementById("final-stats");
+    
+    // Audio elements
     const correctSound = document.getElementById("correct-sound");
     const wrongSound = document.getElementById("wrong-sound");
+    const matchSound = document.getElementById("match-sound") || correctSound;
+    const flipSound = document.getElementById("flip-sound") || correctSound;
+    const gameOverSound = document.getElementById("game-over-sound") || wrongSound;
+    
+    // Game state
+    let gameType = "card"; // "card" or "sequence"
+    let difficulty = 1;
+    let score = 0;
+    let moves = 0;
+    let timer = 0;
+    let timerInterval;
+    let isGameActive = false;
+    
+    // Card matching game variables
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let totalPairs = 0;
+    let cardSymbols = ["♠", "♥", "♦", "♣", "★", "✿", "♛", "♞", "⚙", "⚛", "☯", "☢"];
+    
+    // Sequence game variables
+    let sequence = [];
+    let playerSequence = [];
+    let sequenceLength = 0;
+    let gridSize = 0;
+    let lightingSpeed = 0;
+    
+    // Event Listeners for buttons
+    document.getElementById("start-btn").addEventListener("click", showLevelSelection);
+    document.getElementById("leaderboard-btn").addEventListener("click", showLeaderboard);
+    document.getElementById("restart-btn").addEventListener("click", () => startGame(difficulty));
+    document.getElementById("play-again-btn").addEventListener("click", showLevelSelection);
+    document.getElementById("view-leaderboard-btn").addEventListener("click", showLeaderboard);
+    document.getElementById("back-to-menu-btn").addEventListener("click", () => {
+      leaderboardScreen.style.display = "none";
+      startScreen.style.display = "block";
+    });
+    document.getElementById("save-score-btn").addEventListener("click", saveScore);
+    
+    // Game type toggle
+    const gameTypeToggle = document.querySelector("#game-type-toggle .toggle-switch");
+    gameTypeToggle.addEventListener("click", toggleGameType);
 
-    let sequence = []; // Correct sequence
-    let playerSequence = []; // Player's input
-    let level = 1;
-    let gridSize, initialSequenceLength, lightingSpeed;
-
-    // Show level selection on page load
-    document.getElementById("level-selection").style.display = "block";
-
-    function startGame(difficulty) {
-      document.getElementById("level-selection").style.display = "none";
-      document.getElementById("game-container").style.display = "block";
-
+    function toggleGameType() {
+      const toggleSlider = gameTypeToggle.querySelector(".toggle-slider");
+      toggleSlider.classList.toggle("right");
+      gameType = toggleSlider.classList.contains("right") ? "sequence" : "card";
+    }
+    
+    // Screen navigation functions
+    function showLevelSelection() {
+      startScreen.style.display = "none";
+      gameOverScreen.style.display = "none";
+      leaderboardScreen.style.display = "none";
+      levelSelection.style.display = "block";
+    }
+    
+    function showLeaderboard() {
+      startScreen.style.display = "none";
+      gameOverScreen.style.display = "none";
+      levelSelection.style.display = "none";
+      leaderboardScreen.style.display = "block";
+      displayLeaderboard(gameType);
+    }
+    
+    function startGame(selectedDifficulty) {
+      difficulty = selectedDifficulty;
+      levelSelection.style.display = "none";
+      gameContainer.style.display = "block";
+      
+      resetGameState();
+      
+      if (gameType === "card") {
+        initializeCardGame();
+      } else {
+        initializeSequenceGame();
+      }
+    }
+    
+    function resetGameState() {
+      score = 0;
+      moves = 0;
+      timer = 0;
+      clearInterval(timerInterval);
+      
+      // Reset displays
+      timerDisplay.textContent = "Time: 0s";
+      scoreDisplay.textContent = "Score: 0";
+      movesDisplay.textContent = "Moves: 0";
+      
+      // Start timer
+      timerInterval = setInterval(() => {
+        timer++;
+        timerDisplay.textContent = `Time: ${timer}s`;
+      }, 1000);
+      
+      isGameActive = true;
+    }
+    
+    function endGame(win = true) {
+      isGameActive = false;
+      clearInterval(timerInterval);
+      
+      if (win) {
+        finalStats.innerHTML = `
+          <p>Difficulty: ${["Easy", "Medium", "Hard"][difficulty-1]}</p>
+          <p>Time: ${timer} seconds</p>
+          <p>Moves: ${moves}</p>
+          <p>Score: ${score}</p>
+        `;
+        
+        gameContainer.style.display = "none";
+        gameOverScreen.style.display = "block";
+        gameOverSound.play();
+      }
+    }
+    
+    // Card Matching Game Logic
+    function initializeCardGame() {
+      memoryGame.style.display = "grid";
+      sequenceGame.style.display = "none";
+      
+      // Set difficulty parameters
+      let gridColumns;
+      if (difficulty === 1) {
+        totalPairs = 6; // 12 cards
+        gridColumns = 4; // 4x3 grid
+      } else if (difficulty === 2) {
+        totalPairs = 8; // 16 cards
+        gridColumns = 4; // 4x4 grid
+      } else {
+        totalPairs = 12; // 24 cards
+        gridColumns = 6; // 6x4 grid
+      }
+      
+      // Create cards
+      createMemoryCards(totalPairs);
+      memoryGame.style.gridTemplateColumns = `repeat(${gridColumns}, 1fr)`;
+      
+      matchedPairs = 0;
+      flippedCards = [];
+      message.textContent = "Match the cards!";
+    }
+    
+    function createMemoryCards(pairs) {
+      memoryGame.innerHTML = "";
+      
+      // Get a subset of symbols based on pairs needed
+      const gameSymbols = [...cardSymbols].slice(0, pairs);
+      
+      // Create pairs and shuffle
+      const cardValues = [...gameSymbols, ...gameSymbols];
+      shuffleArray(cardValues);
+      
+      // Create card elements
+      cardValues.forEach((symbol, index) => {
+        const card = document.createElement("div");
+        card.classList.add("memory-card");
+        card.dataset.value = symbol;
+        card.dataset.index = index;
+        
+        const cardFront = document.createElement("div");
+        cardFront.classList.add("card-front");
+        cardFront.textContent = symbol;
+        
+        const cardBack = document.createElement("div");
+        cardBack.classList.add("card-back");
+        
+        card.appendChild(cardFront);
+        card.appendChild(cardBack);
+        
+        card.addEventListener("click", () => flipCard(card));
+        
+        memoryGame.appendChild(card);
+      });
+    }
+    
+    function flipCard(card) {
+      if (!isGameActive || flippedCards.length >= 2 || card.classList.contains("flipped") || card.classList.contains("matched")) {
+        return;
+      }
+      
+      flipSound.play();
+      card.classList.add("flipped");
+      flippedCards.push(card);
+      
+      if (flippedCards.length === 2) {
+        moves++;
+        movesDisplay.textContent = `Moves: ${moves}`;
+        
+        setTimeout(checkForMatch, 500);
+      }
+    }
+    
+    function checkForMatch() {
+      const [card1, card2] = flippedCards;
+      
+      if (card1.dataset.value === card2.dataset.value) {
+        // Match found
+        matchSound.play();
+        card1.classList.add("matched");
+        card2.classList.add("matched");
+        matchedPairs++;
+        
+        // Calculate score: base points + time bonus + difficulty multiplier
+        const basePoints = 100;
+        const timeBonus = Math.max(50 - Math.floor(timer / 5), 0);
+        const difficultyMultiplier = difficulty;
+        
+        const pointsEarned = (basePoints + timeBonus) * difficultyMultiplier;
+        score += pointsEarned;
+        scoreDisplay.textContent = `Score: ${score}`;
+        
+        message.textContent = `Match found! +${pointsEarned} points`;
+        message.classList.add("pulse");
+        setTimeout(() => message.classList.remove("pulse"), 500);
+        
+        if (matchedPairs === totalPairs) {
+          setTimeout(() => endGame(true), 500);
+        }
+      } else {
+        // No match
+        wrongSound.play();
+        setTimeout(() => {
+          card1.classList.remove("flipped");
+          card2.classList.remove("flipped");
+        }, 500);
+        
+        message.textContent = "Try again!";
+      }
+      
+      flippedCards = [];
+    }
+    
+    // Sequence Game Logic
+    function initializeSequenceGame() {
+      memoryGame.style.display = "none";
+      sequenceGame.style.display = "grid";
+      
       // Set difficulty parameters
       if (difficulty === 1) {
         gridSize = 3; // 3x3 grid
-        initialSequenceLength = 3;
+        sequenceLength = 3;
         lightingSpeed = 800; // 800ms delay between lights
       } else if (difficulty === 2) {
         gridSize = 4; // 4x4 grid
-        initialSequenceLength = 4;
+        sequenceLength = 4;
         lightingSpeed = 600;
-      } else if (difficulty === 3) {
+      } else {
         gridSize = 5; // 5x5 grid
-        initialSequenceLength = 5;
+        sequenceLength = 5;
         lightingSpeed = 400;
       }
-
-      // Generate grid and start level
-      generateGrid();
-      startLevel();
+      
+      sequenceGame.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+      generateSequenceGrid();
+      startSequenceLevel();
     }
-
-    function generateGrid() {
-      gridContainer.innerHTML = ""; // Clear existing grid
-      gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-
+    
+    function generateSequenceGrid() {
+      sequenceGame.innerHTML = "";
+      
       // Create grid buttons
       for (let i = 0; i < gridSize * gridSize; i++) {
         const button = document.createElement("div");
-        button.classList.add("button");
-        button.id = `btn-${i}`;
-        gridContainer.appendChild(button);
-
+        button.classList.add("sequence-button");
+        button.id = `seq-btn-${i}`;
+        sequenceGame.appendChild(button);
+        
         // Add event listener for player clicks
         button.addEventListener("click", () => {
           if (message.textContent === "Your turn!") {
             playerSequence.push(i);
-            checkPlayerInput(i, button);
+            checkSequenceInput(i, button);
           }
         });
       }
     }
-
-    function startLevel() {
+    
+    function startSequenceLevel() {
       playerSequence = [];
-      sequence = Array.from({ length: initialSequenceLength + level - 1 }, () =>
+      sequence = Array.from({ length: sequenceLength }, () =>
         Math.floor(Math.random() * gridSize * gridSize)
       );
-
-      levelDisplay.textContent = `Level: ${level}`;
+      
       message.textContent = "Watch carefully...";
-      playSequence();
+      setTimeout(playSequence, 1000);
     }
-
+    
     function playSequence() {
       let i = 0;
       const interval = setInterval(() => {
         if (i < sequence.length) {
-          const button = document.getElementById(`btn-${sequence[i]}`);
+          const button = document.getElementById(`seq-btn-${sequence[i]}`);
           button.classList.add("active");
           setTimeout(() => button.classList.remove("active"), lightingSpeed / 2);
           i++;
@@ -199,31 +673,130 @@
         }
       }, lightingSpeed);
     }
-
-    function checkPlayerInput(index, button) {
+    
+    function checkSequenceInput(index, button) {
       const currentStep = playerSequence.length - 1;
-
-      if (playerSequence[currentStep] !== sequence[currentStep]) {
-        wrongSound.play(); // Play wrong sound
+      
+      if (index !== sequence[currentStep]) {
+        wrongSound.play();
         button.classList.add("wrong");
-        message.textContent = "Wrong! Restarting level...";
+        message.textContent = "Wrong! Game over.";
         setTimeout(() => {
           button.classList.remove("wrong");
-          startLevel();
+          calculateSequenceScore();
+          endGame(true);
         }, 1000);
         return;
       }
-
-      correctSound.play(); // Play correct sound
+      
+      correctSound.play();
       button.classList.add("correct");
       setTimeout(() => button.classList.remove("correct"), 300);
-
+      
       if (playerSequence.length === sequence.length) {
-        level++;
-        message.textContent = "Correct! Next level loading...";
-        setTimeout(startLevel, 1000);
+        // Level completed
+        sequenceLength++;
+        
+        // Calculate score
+        const basePoints = 100;
+        const timeBonus = Math.max(50 - Math.floor(timer / 3), 0);
+        const difficultyMultiplier = difficulty;
+        const lengthBonus = sequence.length * 10;
+        
+        const pointsEarned = (basePoints + timeBonus + lengthBonus) * difficultyMultiplier;
+        score += pointsEarned;
+        scoreDisplay.textContent = `Score: ${score}`;
+        
+        moves++;
+        movesDisplay.textContent = `Moves: ${moves}`;
+        
+        message.textContent = `Correct! +${pointsEarned} points. Next sequence...`;
+        message.classList.add("pulse");
+        setTimeout(() => message.classList.remove("pulse"), 500);
+        
+        setTimeout(startSequenceLevel, 1500);
       }
     }
+    
+    function calculateSequenceScore() {
+      // Final calculation for sequence game
+      const levelBonus = (sequenceLength - (difficulty === 1 ? 3 : difficulty === 2 ? 4 : 5)) * 50;
+      if (levelBonus > 0) {
+        score += levelBonus;
+        scoreDisplay.textContent = `Score: ${score}`;
+      }
+    }
+    
+    // Leaderboard functionality
+    function saveScore() {
+      const playerName = document.getElementById("player-name").value.trim() || "Anonymous";
+      
+      // Get existing leaderboard data
+      let leaderboard = JSON.parse(localStorage.getItem(`leaderboard_${gameType}`) || "[]");
+      
+      // Add new score
+      leaderboard.push({
+        name: playerName,
+        score: score,
+        difficulty: difficulty,
+        moves: moves,
+        time: timer,
+        date: new Date().toLocaleDateString()
+      });
+      
+      // Sort by score (highest first)
+      leaderboard.sort((a, b) => b.score - a.score);
+      
+      // Keep only top 10
+      leaderboard = leaderboard.slice(0, 10);
+      
+      // Save back to localStorage
+      localStorage.setItem(`leaderboard_${gameType}`, JSON.stringify(leaderboard));
+      
+      // Show leaderboard
+      showLeaderboard();
+    }
+    
+    function displayLeaderboard(type) {
+      const leaderboard = JSON.parse(localStorage.getItem(`leaderboard_${type}`) || "[]");
+      const leaderboardBody = document.getElementById("leaderboard-body");
+      
+      leaderboardBody.innerHTML = "";
+      
+      if (leaderboard.length === 0) {
+        const row = document.createElement("tr");
+        row.innerHTML = "<td colspan='5'>No scores yet. Be the first!</td>";
+        leaderboardBody.appendChild(row);
+      } else {
+        leaderboard.forEach((entry, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${entry.name}</td>
+            <td>${entry.score}</td>
+            <td>${["Easy", "Medium", "Hard"][entry.difficulty - 1]}</td>
+            <td>${entry.date}</td>
+          `;
+          leaderboardBody.appendChild(row);
+        });
+      }
+    }
+    
+    // Utility functions
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+    
+    // Initialize toggle switches for leaderboard
+    document.querySelector("#leaderboard .toggle-switch").addEventListener("click", function() {
+      const toggleSlider = this.querySelector(".toggle-slider");
+      toggleSlider.classList.toggle("right");
+      displayLeaderboard(toggleSlider.classList.contains("right") ? "sequence" : "card");
+    });
   </script>
 </body>
 </html>
