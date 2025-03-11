@@ -8,68 +8,147 @@
   <link rel="icon" type="image/png" href="NLC Profile.png">
   
   <style>
+    :root {
+      --primary: #00ff4c;
+      --secondary: #00b248;
+      --dark: #121212;
+      --darker: #0a0a0a;
+      --light: #e0ffe0;
+      --glow: 0 0 10px var(--primary), 0 0 20px rgba(0, 255, 76, 0.5);
+      --card-size: 90px;
+    }
+    
+    * {
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+    
     body {
-      background-color: #000;
-      color: #0f0;
-      font-family: "Courier New", monospace;
+      background-color: var(--dark);
+      background-image: 
+        radial-gradient(circle at 25% 25%, rgba(0, 255, 76, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(0, 255, 76, 0.05) 0%, transparent 50%);
+      color: var(--primary);
+      font-family: 'Montserrat', 'Segoe UI', sans-serif;
       text-align: center;
       margin: 0;
       padding: 0;
       overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    h1, h2 {
+    h1 {
       margin: 20px;
-      text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+      text-shadow: var(--glow);
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      position: relative;
+      display: inline-block;
+    }
+    
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      width: 60%;
+      height: 3px;
+      background: var(--primary);
+      transform: translateX(-50%);
+      box-shadow: var(--glow);
+    }
+    
+    h2 {
+      margin: 20px;
+      font-size: 1.8rem;
+      font-weight: 600;
+      position: relative;
+      display: inline-block;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 20px;
+      position: relative;
     }
-
-    #start-screen, #level-selection, #game-container, #game-over {
+    
+    /* Screen management */
+    #start-screen, #level-selection, #game-container, #game-over, #leaderboard {
       display: none;
+      animation: fadeIn 0.5s ease-in-out;
     }
 
-    #start-screen.active, #level-selection.active, #game-container.active, #game-over.active {
+    #start-screen.active, #level-selection.active, #game-container.active, #game-over.active, #leaderboard.active {
       display: block;
     }
-
+    
+    /* Button styles */
     .btn {
-      background-color: #111;
-      color: #0f0;
-      border: 2px solid #0f0;
-      border-radius: 5px;
-      padding: 10px 20px;
+      background-color: var(--darker);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      padding: 12px 28px;
       cursor: pointer;
-      margin: 10px;
-      font-size: 1.2rem;
-      text-shadow: 0 0 5px #0f0;
-      transition: background-color 0.3s, box-shadow 0.3s;
+      margin: 15px;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      text-shadow: 0 0 5px var(--primary);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
     }
-
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 76, 0.2), transparent);
+      transition: all 0.5s;
+      z-index: -1;
+    }
+    
     .btn:hover {
-      background-color: #222;
-      box-shadow: 0 0 10px #0f0;
+      background-color: rgba(0, 255, 76, 0.1);
+      box-shadow: var(--glow);
+      transform: translateY(-3px);
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn:active {
+      transform: translateY(1px);
     }
 
     /* Card matching game styles */
     #memory-game {
       display: grid;
-      grid-gap: 10px;
+      grid-gap: 15px;
       justify-content: center;
       margin: 30px auto;
       perspective: 1000px;
+      max-width: 600px;
     }
 
     .memory-card {
-      width: 80px;
-      height: 80px;
+      width: var(--card-size);
+      height: var(--card-size);
       position: relative;
       transform-style: preserve-3d;
-      transition: transform 0.5s;
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       cursor: pointer;
     }
 
@@ -78,8 +157,13 @@
     }
 
     .memory-card.matched {
-      transform: rotateY(180deg);
-      box-shadow: 0 0 15px #0f0, 0 0 25px #0f0;
+      transform: rotateY(180deg) scale(1.05);
+      box-shadow: 0 0 15px var(--primary), 0 0 25px var(--primary);
+    }
+    
+    .memory-card:hover:not(.flipped):not(.matched) {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 255, 76, 0.2);
     }
 
     .card-front, .card-back {
@@ -88,7 +172,7 @@
       padding: 10px;
       position: absolute;
       backface-visibility: hidden;
-      border-radius: 5px;
+      border-radius: 10px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -96,139 +180,262 @@
     }
 
     .card-front {
-      background-color: #111;
-      border: 2px solid #0f0;
+      background-color: var(--darker);
+      background-image: radial-gradient(circle, rgba(0, 255, 76, 0.1) 0%, transparent 80%);
+      border: 2px solid var(--primary);
       transform: rotateY(180deg);
-      font-size: 2em;
+      font-size: 2.5em;
+      color: var(--light);
+      text-shadow: 0 0 5px var(--primary);
     }
 
     .card-back {
-      background-color: #222;
-      border: 2px solid #0f0;
-      box-shadow: 0 0 5px #0f0;
+      background-color: var(--darker);
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 5px var(--primary);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card-back::before {
+      content: '?';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      color: var(--primary);
+      opacity: 0.8;
+    }
+    
+    .card-back::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 255, 76, 0.1) 0%, transparent 50%, rgba(0, 255, 76, 0.1) 100%);
+      z-index: 1;
     }
 
     /* Sequence game styles */
     #sequence-game {
       display: grid;
-      grid-gap: 10px;
+      grid-gap: 15px;
       justify-content: center;
       margin: 30px auto;
+      max-width: 600px;
     }
 
     .sequence-button {
-      width: 80px;
-      height: 80px;
-      background-color: #111;
-      border: 2px solid #0f0;
-      border-radius: 5px;
+      width: var(--card-size);
+      height: var(--card-size);
+      background-color: var(--darker);
+      border: 2px solid var(--primary);
+      border-radius: 10px;
       cursor: pointer;
-      box-shadow: 0 0 5px #0f0;
-      transition: background-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 0 5px var(--primary);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sequence-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 255, 76, 0.1) 0%, transparent 50%, rgba(0, 255, 76, 0.1) 100%);
+      z-index: 1;
+    }
+    
+    .sequence-button:hover:not(.active):not(.correct):not(.wrong) {
+      transform: translateY(-5px);
     }
 
     .sequence-button.active {
-      background-color: #0f0;
-      box-shadow: 0 0 20px #0f0, 0 0 30px #0f0;
+      background-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary), 0 0 30px var(--primary);
+      transform: scale(1.1);
     }
 
     .sequence-button.correct {
-      background-color: #0f0;
-      box-shadow: 0 0 20px #0f0;
+      background-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary);
+      transform: scale(1.05);
     }
 
     .sequence-button.wrong {
-      background-color: #f00;
-      box-shadow: 0 0 20px #f00;
+      background-color: #ff3333;
+      box-shadow: 0 0 20px #ff3333;
+      transform: scale(1.05);
     }
 
+    /* Game stats panel */
     #game-stats {
       display: flex;
       justify-content: space-around;
+      align-items: center;
       margin: 20px auto;
       max-width: 600px;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
+      background-color: rgba(10, 10, 10, 0.7);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid rgba(0, 255, 76, 0.3);
+      box-shadow: 0 0 10px rgba(0, 255, 76, 0.1);
     }
 
     #timer, #score, #moves {
-      background-color: #111;
-      border: 2px solid #0f0;
-      border-radius: 5px;
+      background-color: var(--darker);
+      border: 2px solid var(--primary);
+      border-radius: 8px;
       padding: 10px 20px;
-      text-shadow: 0 0 5px #0f0;
+      text-shadow: 0 0 5px var(--primary);
       min-width: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    
+    #timer::before, #score::before, #moves::before {
+      content: attr(data-label);
+      position: absolute;
+      top: -12px;
+      background-color: var(--darker);
+      padding: 0 8px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    #timer span, #score span, #moves span {
+      font-size: 1.2rem;
+      font-weight: bold;
     }
 
+    /* Leaderboard */
     #leaderboard {
       margin: 30px auto;
-      max-width: 600px;
+      max-width: 700px;
+      background-color: rgba(10, 10, 10, 0.7);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(0, 255, 76, 0.3);
     }
 
     #leaderboard table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0 5px;
       margin: 20px 0;
     }
 
     #leaderboard th, #leaderboard td {
-      border: 1px solid #0f0;
-      padding: 8px 12px;
+      padding: 12px;
       text-align: center;
     }
-
+    
     #leaderboard th {
-      background-color: #111;
-      text-shadow: 0 0 5px #0f0;
+      background-color: var(--darker);
+      color: var(--primary);
+      text-shadow: 0 0 5px var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 1rem;
+    }
+    
+    #leaderboard th:first-child {
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+    }
+    
+    #leaderboard th:last-child {
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+    
+    #leaderboard tr:not(:first-child) {
+      background-color: var(--darker);
+      transition: transform 0.2s;
+    }
+    
+    #leaderboard tr:hover:not(:first-child) {
+      transform: translateX(5px);
+      background-color: rgba(0, 255, 76, 0.1);
+    }
+    
+    #leaderboard td:first-child {
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+    }
+    
+    #leaderboard td:last-child {
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+    
+    #leaderboard .rank-1 {
+      background-color: rgba(255, 215, 0, 0.2);
+    }
+    
+    #leaderboard .rank-2 {
+      background-color: rgba(192, 192, 192, 0.2);
+    }
+    
+    #leaderboard .rank-3 {
+      background-color: rgba(205, 127, 50, 0.2);
     }
 
-    #leaderboard tr:nth-child(even) {
-      background-color: #111;
-    }
-
+    /* Game message */
     .message {
       margin: 20px 0;
       font-size: 1.2rem;
       min-height: 30px;
-    }
-
-    footer {
-      margin-top: 30px;
-      color: #0f0;
-      font-size: 0.9rem;
-      text-shadow: 0 0 5px #0f0;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: rgba(0, 255, 76, 0.1);
+      border: 1px solid rgba(0, 255, 76, 0.3);
+      display: inline-block;
+      transition: all 0.3s;
     }
 
     /* Game type toggle */
     #game-type-toggle {
-      margin: 20px auto;
+      margin: 30px auto;
     }
 
     .toggle-switch {
       display: inline-block;
       position: relative;
       width: 280px;
-      height: 40px;
-      border: 2px solid #0f0;
-      border-radius: 20px;
-      background-color: #111;
-      box-shadow: 0 0 5px #0f0;
+      height: 46px;
+      border: 2px solid var(--primary);
+      border-radius: 23px;
+      background-color: var(--darker);
+      box-shadow: 0 0 5px var(--primary);
       cursor: pointer;
+      overflow: hidden;
     }
 
     .toggle-slider {
       position: absolute;
-      top: 2px;
-      left: 2px;
+      top: 3px;
+      left: 3px;
       width: 135px;
       height: 36px;
       border-radius: 18px;
-      background-color: #0f0;
-      box-shadow: 0 0 10px #0f0;
-      transition: left 0.3s;
+      background-color: rgba(0, 255, 76, 0.2);
+      box-shadow: inset 0 0 10px var(--primary);
+      transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .toggle-slider.right {
-      left: 143px;
+      left: 138px;
     }
 
     .toggle-labels {
@@ -237,7 +444,69 @@
       align-items: center;
       height: 100%;
       font-size: 1rem;
-      text-shadow: 0 0 5px #0f0;
+      text-shadow: 0 0 5px var(--primary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* Game over screen */
+    #game-over {
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: rgba(10, 10, 10, 0.7);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 255, 76, 0.3);
+      box-shadow: 0 0 20px rgba(0, 255, 76, 0.1);
+    }
+    
+    #final-stats {
+      padding: 20px;
+      margin: 20px 0;
+      background-color: var(--darker);
+      border-radius: 8px;
+      border: 1px solid var(--primary);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    
+    #final-stats p {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    
+    #player-name-input {
+      margin: 20px 0;
+    }
+    
+    #player-name {
+      background-color: var(--darker);
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      padding: 10px 15px;
+      color: var(--light);
+      font-size: 1.1rem;
+      margin-top: 10px;
+      width: 80%;
+      max-width: 300px;
+      text-align: center;
+    }
+    
+    #player-name:focus {
+      outline: none;
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      padding: 20px;
+      color: var(--primary);
+      font-size: 0.9rem;
+      text-shadow: 0 0 5px var(--primary);
+      opacity: 0.7;
     }
 
     /* Animation for correct/incorrect */
@@ -246,21 +515,158 @@
       50% { transform: scale(1.1); }
       100% { transform: scale(1); }
     }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes glow {
+      0% { box-shadow: 0 0 5px var(--primary); }
+      50% { box-shadow: 0 0 20px var(--primary), 0 0 30px var(--primary); }
+      100% { box-shadow: 0 0 5px var(--primary); }
+    }
 
     .pulse {
       animation: pulse 0.5s;
     }
+    
+    /* Particle background (decorative) */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .particle {
+      position: absolute;
+      background-color: var(--primary);
+      border-radius: 50%;
+      opacity: 0;
+      animation: particle-animation 15s infinite linear;
+    }
+    
+    @keyframes particle-animation {
+      0% {
+        opacity: 0;
+        transform: translateY(0) rotate(0deg);
+      }
+      10% {
+        opacity: 0.5;
+      }
+      90% {
+        opacity: 0.5;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-500px) rotate(360deg);
+      }
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      :root {
+        --card-size: 70px;
+      }
+      
+      .container {
+        padding: 10px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      .btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+        margin: 10px;
+      }
+      
+      #game-stats {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      #timer, #score, #moves {
+        width: 100%;
+      }
+      
+      .toggle-switch {
+        width: 240px;
+      }
+      
+      .toggle-slider {
+        width: 115px;
+      }
+      
+      .toggle-slider.right {
+        left: 118px;
+      }
+      
+      #final-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      :root {
+        --card-size: 60px;
+      }
+      
+      #memory-game, #sequence-game {
+        grid-gap: 10px;
+      }
+      
+      .toggle-switch {
+        width: 220px;
+        height: 40px;
+      }
+      
+      .toggle-slider {
+        width: 105px;
+        height: 32px;
+      }
+      
+      .toggle-slider.right {
+        left: 108px;
+      }
+      
+      .toggle-labels {
+        font-size: 0.8rem;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Particle background -->
+  <div class="particles" id="particles"></div>
+
   <div class="container">
     <h1>Memory Match Challenge</h1>
     
     <!-- Start Screen -->
     <div id="start-screen" class="active">
       <h2>Test Your Memory Skills</h2>
-      <p>Challenge yourself with two different memory games:<br>
-         Card Matching or Sequence Memorization</p>
+      <p>Challenge yourself with two different memory games</p>
+      <div class="game-description">
+        <div class="game-type">
+          <h3>Card Matching</h3>
+          <p>Find matching pairs of cards in the fewest moves possible</p>
+        </div>
+        <div class="game-type">
+          <h3>Sequence Memory</h3>
+          <p>Remember and repeat increasingly complex patterns</p>
+        </div>
+      </div>
       <button class="btn" id="start-btn">Start Game</button>
       <button class="btn" id="leaderboard-btn">View Leaderboard</button>
     </div>
@@ -286,9 +692,15 @@
     <!-- Game Container -->
     <div id="game-container">
       <div id="game-stats">
-        <div id="timer">Time: 0s</div>
-        <div id="score">Score: 0</div>
-        <div id="moves">Moves: 0</div>
+        <div id="timer" data-label="Time">
+          <span>0s</span>
+        </div>
+        <div id="score" data-label="Score">
+          <span>0</span>
+        </div>
+        <div id="moves" data-label="Moves">
+          <span>0</span>
+        </div>
       </div>
       
       <div id="memory-game"></div>
@@ -301,11 +713,11 @@
     
     <!-- Game Over Screen -->
     <div id="game-over">
-      <h2>Game Over</h2>
+      <h2>Game Complete!</h2>
       <div id="final-stats"></div>
       <div id="player-name-input">
         <p>Enter your name for the leaderboard:</p>
-        <input type="text" id="player-name" maxlength="15">
+        <input type="text" id="player-name" maxlength="15" placeholder="Your name">
         <button class="btn" id="save-score-btn">Save Score</button>
       </div>
       <button class="btn" id="play-again-btn">Play Again</button>
@@ -349,7 +761,7 @@
   <audio id="wrong-sound" src="Wrong.mp3"></audio>
   <audio id="match-sound" src="Match.mp3"></audio>
   <audio id="flip-sound" src="Flip.mp3"></audio>
-  <audio id="game-over-sound" src="GameOver.mp3"></audio>
+  <audio id="game-over-sound" src="Game Over.mp3"></audio>
 
   <script>
     // DOM Elements
@@ -363,9 +775,9 @@
     const sequenceGame = document.getElementById("sequence-game");
     const message = document.getElementById("message");
     
-    const timerDisplay = document.getElementById("timer");
-    const scoreDisplay = document.getElementById("score");
-    const movesDisplay = document.getElementById("moves");
+    const timerDisplay = document.getElementById("timer").querySelector("span");
+    const scoreDisplay = document.getElementById("score").querySelector("span");
+    const movesDisplay = document.getElementById("moves").querySelector("span");
     const finalStats = document.getElementById("final-stats");
     
     // Audio elements
@@ -388,7 +800,7 @@
     let flippedCards = [];
     let matchedPairs = 0;
     let totalPairs = 0;
-    let cardSymbols = ["♠", "♥", "♦", "♣", "★", "✿", "♛", "♞", "⚙", "⚛", "☯", "☢"];
+    let cardSymbols = ["♠", "♥", "♦", "♣", "★", "✿", "♛", "♞", "⚙", "⚛", "☯", "☢", "🚀", "🔮", "🎮", "🎯"];
     
     // Sequence game variables
     let sequence = [];
@@ -417,6 +829,34 @@
       const toggleSlider = gameTypeToggle.querySelector(".toggle-slider");
       toggleSlider.classList.toggle("right");
       gameType = toggleSlider.classList.contains("right") ? "sequence" : "card";
+    }
+    
+    // Create particles for background effect
+    function createParticles() {
+      const particles = document.getElementById("particles");
+      const particleCount = 30;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement("div");
+        particle.classList.add("particle");
+        
+        // Random size between 2-5px
+        const size = Math.random() * 3 + 2;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        // Random position
+        particle.style.left = `${Math.random() * 100}vw`;
+        particle.style.top = `${Math.random() * 100}vh`;
+        
+        // Random animation delay
+        particle.style.animationDelay = `${Math.random() * 15}s`;
+        
+        // Random opacity
+        particle.style.opacity = Math.random() * 0.5;
+        
+        particles.appendChild(particle);
+      }
     }
     
     // Screen navigation functions
@@ -456,14 +896,14 @@
       clearInterval(timerInterval);
       
       // Reset displays
-      timerDisplay.textContent = "Time: 0s";
-      scoreDisplay.textContent = "Score: 0";
-      movesDisplay.textContent = "Moves: 0";
+      timerDisplay.textContent = "0s";
+      scoreDisplay.textContent = "0";
+      movesDisplay.textContent = "0";
       
       // Start timer
       timerInterval = setInterval(() => {
         timer++;
-        timerDisplay.textContent = `Time: ${timer}s`;
+        timerDisplay.textContent = `${timer}s`;
       }, 1000);
       
       isGameActive = true;
@@ -473,330 +913,384 @@
       isGameActive = false;
       clearInterval(timerInterval);
       
-      if (win) {
-        finalStats.innerHTML = `
-          <p>Difficulty: ${["Easy", "Medium", "Hard"][difficulty-1]}</p>
-          <p>Time: ${timer} seconds</p>
-          <p>Moves: ${moves}</p>
-          <p>Score: ${score}</p>
-        `;
-        
-        gameContainer.style.display = "none";
-        gameOverScreen.style.display = "block";
-        gameOverSound.play();
-      }
+        if (win) {
+    // Play win sound
+    correctSound.play();
+    message.textContent = "Congratulations! You won!";
+    
+    // Calculate final score based on game type
+    let finalScore = 0;
+    if (gameType === "card") {
+      // For card game: score based on time and moves
+      finalScore = Math.round((1000 * difficulty) / (timer + (moves * 0.5)));
+    } else {
+      // For sequence game: score is already tracked
+      finalScore = score;
     }
     
-    // Card Matching Game Logic
-    function initializeCardGame() {
-      memoryGame.style.display = "grid";
-      sequenceGame.style.display = "none";
-      
-      // Set difficulty parameters
-      let gridColumns;
-      if (difficulty === 1) {
-        totalPairs = 6; // 12 cards
-        gridColumns = 4; // 4x3 grid
-      } else if (difficulty === 2) {
-        totalPairs = 8; // 16 cards
-        gridColumns = 4; // 4x4 grid
-      } else {
-        totalPairs = 12; // 24 cards
-        gridColumns = 6; // 6x4 grid
-      }
-      
-      // Create cards
-      createMemoryCards(totalPairs);
-      memoryGame.style.gridTemplateColumns = `repeat(${gridColumns}, 1fr)`;
-      
-      matchedPairs = 0;
+    scoreDisplay.textContent = finalScore;
+    
+    // Prepare final stats
+    finalStats.innerHTML = `
+      <p>Difficulty: ${['Easy', 'Medium', 'Hard'][difficulty-1]}</p>
+      <p>Game Type: ${gameType === 'card' ? 'Card Matching' : 'Sequence Memory'}</p>
+      <p>Time: ${timer} seconds</p>
+      <p>Moves: ${moves}</p>
+      <p>Final Score: ${finalScore}</p>
+    `;
+    
+    // Show game over screen after a delay
+    setTimeout(() => {
+      gameContainer.style.display = "none";
+      gameOverScreen.style.display = "block";
+    }, 1500);
+  } else {
+    // Game lost (likely only for sequence game)
+    wrongSound.play();
+    message.textContent = "Game Over!";
+    
+    // Show game over screen after a delay
+    setTimeout(() => {
+      gameContainer.style.display = "none";
+      gameOverScreen.style.display = "block";
+    }, 1500);
+  }
+}
+
+// Card Matching Game Functions
+function initializeCardGame() {
+  // Clear both game areas
+  memoryGame.innerHTML = "";
+  sequenceGame.style.display = "none";
+  memoryGame.style.display = "grid";
+  
+  // Set up grid based on difficulty
+  let gridColumns;
+  let cardCount;
+  
+  switch(difficulty) {
+    case 1: // Easy
+      gridColumns = 4;
+      cardCount = 16; // 8 pairs
+      break;
+    case 2: // Medium
+      gridColumns = 5;
+      cardCount = 20; // 10 pairs
+      break;
+    case 3: // Hard
+      gridColumns = 6;
+      cardCount = 24; // 12 pairs
+      break;
+  }
+  
+  memoryGame.style.gridTemplateColumns = `repeat(${gridColumns}, 1fr)`;
+  totalPairs = cardCount / 2;
+  
+  // Create the cards
+  const symbols = [...cardSymbols];
+  const selectedSymbols = symbols.slice(0, totalPairs);
+  const cardDeck = [...selectedSymbols, ...selectedSymbols]; // Double to create pairs
+  
+  // Shuffle cards
+  shuffle(cardDeck);
+  
+  // Create card elements
+  cardDeck.forEach((symbol, index) => {
+    const card = document.createElement("div");
+    card.classList.add("memory-card");
+    card.setAttribute("data-symbol", symbol);
+    
+    const cardFront = document.createElement("div");
+    cardFront.classList.add("card-front");
+    cardFront.textContent = symbol;
+    
+    const cardBack = document.createElement("div");
+    cardBack.classList.add("card-back");
+    
+    card.appendChild(cardFront);
+    card.appendChild(cardBack);
+    
+    card.addEventListener("click", flipCard);
+    
+    memoryGame.appendChild(card);
+  });
+  
+  message.textContent = "Find all matching pairs!";
+}
+
+function flipCard() {
+  if (!isGameActive) return;
+  if (flippedCards.length >= 2) return;
+  if (this.classList.contains("flipped") || this.classList.contains("matched")) return;
+  
+  this.classList.add("flipped");
+  flipSound.play();
+  
+  flippedCards.push(this);
+  
+  if (flippedCards.length === 2) {
+    moves++;
+    movesDisplay.textContent = moves;
+    checkForMatch();
+  }
+}
+
+function checkForMatch() {
+  const [card1, card2] = flippedCards;
+  const symbol1 = card1.getAttribute("data-symbol");
+  const symbol2 = card2.getAttribute("data-symbol");
+  
+  if (symbol1 === symbol2) {
+    // Match found
+    card1.classList.add("matched");
+    card2.classList.add("matched");
+    flippedCards = [];
+    matchedPairs++;
+    matchSound.play();
+    
+    // Check if game completed
+    if (matchedPairs === totalPairs) {
+      endGame(true);
+    }
+  } else {
+    // Not a match, flip back after delay
+    setTimeout(() => {
+      card1.classList.remove("flipped");
+      card2.classList.remove("flipped");
       flippedCards = [];
-      message.textContent = "Match the cards!";
-    }
+    }, 1000);
+  }
+}
+
+// Sequence Game Functions
+function initializeSequenceGame() {
+  // Clear both game areas
+  sequenceGame.innerHTML = "";
+  memoryGame.style.display = "none";
+  sequenceGame.style.display = "grid";
+  
+  // Set up grid based on difficulty
+  switch(difficulty) {
+    case 1: // Easy
+      gridSize = 2; // 2x2
+      lightingSpeed = 800;
+      break;
+    case 2: // Medium
+      gridSize = 3; // 3x3
+      lightingSpeed = 600;
+      break;
+    case 3: // Hard
+      gridSize = 4; // 4x4
+      lightingSpeed = 500;
+      break;
+  }
+  
+  sequenceGame.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+  
+  // Create buttons
+  for (let i = 0; i < gridSize * gridSize; i++) {
+    const button = document.createElement("div");
+    button.classList.add("sequence-button");
+    button.dataset.index = i;
     
-    function createMemoryCards(pairs) {
-      memoryGame.innerHTML = "";
-      
-      // Get a subset of symbols based on pairs needed
-      const gameSymbols = [...cardSymbols].slice(0, pairs);
-      
-      // Create pairs and shuffle
-      const cardValues = [...gameSymbols, ...gameSymbols];
-      shuffleArray(cardValues);
-      
-      // Create card elements
-      cardValues.forEach((symbol, index) => {
-        const card = document.createElement("div");
-        card.classList.add("memory-card");
-        card.dataset.value = symbol;
-        card.dataset.index = index;
-        
-        const cardFront = document.createElement("div");
-        cardFront.classList.add("card-front");
-        cardFront.textContent = symbol;
-        
-        const cardBack = document.createElement("div");
-        cardBack.classList.add("card-back");
-        
-        card.appendChild(cardFront);
-        card.appendChild(cardBack);
-        
-        card.addEventListener("click", () => flipCard(card));
-        
-        memoryGame.appendChild(card);
-      });
-    }
+    button.addEventListener("click", () => playerInput(i));
     
-    function flipCard(card) {
-      if (!isGameActive || flippedCards.length >= 2 || card.classList.contains("flipped") || card.classList.contains("matched")) {
-        return;
-      }
-      
-      flipSound.play();
-      card.classList.add("flipped");
-      flippedCards.push(card);
-      
-      if (flippedCards.length === 2) {
-        moves++;
-        movesDisplay.textContent = `Moves: ${moves}`;
-        
-        setTimeout(checkForMatch, 500);
-      }
-    }
+    sequenceGame.appendChild(button);
+  }
+  
+  message.textContent = "Watch the sequence carefully!";
+  
+  // Start with a sequence of 1
+  sequenceLength = 1;
+  sequence = [];
+  playerSequence = [];
+  
+  // Generate first sequence after short delay
+  setTimeout(generateSequence, 1500);
+}
+
+function generateSequence() {
+  if (!isGameActive) return;
+  
+  // Add a new random button to the sequence
+  const totalButtons = gridSize * gridSize;
+  sequence.push(Math.floor(Math.random() * totalButtons));
+  
+  // Display the sequence to the player
+  playerSequence = [];
+  displaySequence(0);
+}
+
+function displaySequence(index) {
+  if (index >= sequence.length) {
+    // Completed showing sequence, allow player input
+    message.textContent = "Your turn! Repeat the sequence.";
+    return;
+  }
+  
+  const buttonIndex = sequence[index];
+  const button = sequenceGame.children[buttonIndex];
+  
+  // Light up the button
+  button.classList.add("active");
+  correctSound.play();
+  
+  // Turn off after delay
+  setTimeout(() => {
+    button.classList.remove("active");
     
-    function checkForMatch() {
-      const [card1, card2] = flippedCards;
-      
-      if (card1.dataset.value === card2.dataset.value) {
-        // Match found
-        matchSound.play();
-        card1.classList.add("matched");
-        card2.classList.add("matched");
-        matchedPairs++;
-        
-        // Calculate score: base points + time bonus + difficulty multiplier
-        const basePoints = 100;
-        const timeBonus = Math.max(50 - Math.floor(timer / 5), 0);
-        const difficultyMultiplier = difficulty;
-        
-        const pointsEarned = (basePoints + timeBonus) * difficultyMultiplier;
-        score += pointsEarned;
-        scoreDisplay.textContent = `Score: ${score}`;
-        
-        message.textContent = `Match found! +${pointsEarned} points`;
-        message.classList.add("pulse");
-        setTimeout(() => message.classList.remove("pulse"), 500);
-        
-        if (matchedPairs === totalPairs) {
-          setTimeout(() => endGame(true), 500);
-        }
-      } else {
-        // No match
-        wrongSound.play();
-        setTimeout(() => {
-          card1.classList.remove("flipped");
-          card2.classList.remove("flipped");
-        }, 500);
-        
-        message.textContent = "Try again!";
-      }
-      
-      flippedCards = [];
-    }
+    // Show next in sequence after delay
+    setTimeout(() => displaySequence(index + 1), lightingSpeed / 2);
+  }, lightingSpeed);
+}
+
+function playerInput(buttonIndex) {
+  if (!isGameActive) return;
+  if (playerSequence.length >= sequence.length) return;
+  
+  const button = sequenceGame.children[buttonIndex];
+  playerSequence.push(buttonIndex);
+  
+  // Highlight the clicked button
+  button.classList.add("active");
+  
+  // Check if this input matches the sequence
+  const currentIndex = playerSequence.length - 1;
+  if (playerSequence[currentIndex] === sequence[currentIndex]) {
+    // Correct input
+    correctSound.play();
     
-    // Sequence Game Logic
-    function initializeSequenceGame() {
-      memoryGame.style.display = "none";
-      sequenceGame.style.display = "grid";
-      
-      // Set difficulty parameters
-      if (difficulty === 1) {
-        gridSize = 3; // 3x3 grid
-        sequenceLength = 3;
-        lightingSpeed = 800; // 800ms delay between lights
-      } else if (difficulty === 2) {
-        gridSize = 4; // 4x4 grid
-        sequenceLength = 4;
-        lightingSpeed = 600;
-      } else {
-        gridSize = 5; // 5x5 grid
-        sequenceLength = 5;
-        lightingSpeed = 400;
-      }
-      
-      sequenceGame.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-      generateSequenceGrid();
-      startSequenceLevel();
-    }
+    // Remove highlight after delay
+    setTimeout(() => {
+      button.classList.remove("active");
+    }, 200);
     
-    function generateSequenceGrid() {
-      sequenceGame.innerHTML = "";
+    // Check if completed the full sequence
+    if (playerSequence.length === sequence.length) {
+      // Complete sequence correct
+      score += sequenceLength * 10 * difficulty;
+      scoreDisplay.textContent = score;
+      sequenceLength++;
       
-      // Create grid buttons
-      for (let i = 0; i < gridSize * gridSize; i++) {
-        const button = document.createElement("div");
-        button.classList.add("sequence-button");
-        button.id = `seq-btn-${i}`;
-        sequenceGame.appendChild(button);
-        
-        // Add event listener for player clicks
-        button.addEventListener("click", () => {
-          if (message.textContent === "Your turn!") {
-            playerSequence.push(i);
-            checkSequenceInput(i, button);
-          }
+      // Next sequence after delay
+      message.textContent = "Correct! Watch the next sequence.";
+      setTimeout(generateSequence, 1500);
+    }
+  } else {
+    // Wrong input, game over
+    button.classList.add("wrong");
+    wrongSound.play();
+    
+    message.textContent = "Wrong sequence! Game over.";
+    
+    // End game after delay
+    setTimeout(() => {
+      endGame(false);
+    }, 1500);
+  }
+}
+
+// Leaderboard Functions
+function saveScore() {
+  const playerName = document.getElementById("player-name").value || "Anonymous";
+  const finalScore = parseInt(scoreDisplay.textContent);
+  
+  let leaderboard = JSON.parse(localStorage.getItem(`leaderboard-${gameType}`) || "[]");
+  
+  leaderboard.push({
+    name: playerName,
+    score: finalScore,
+    difficulty: difficulty,
+    date: new Date().toLocaleDateString()
+  });
+  
+  // Sort by score (descending)
+  leaderboard.sort((a, b) => b.score - a.score);
+  
+  // Keep only top 10
+  leaderboard = leaderboard.slice(0, 10);
+  
+  localStorage.setItem(`leaderboard-${gameType}`, JSON.stringify(leaderboard));
+  
+  // Show leaderboard
+  showLeaderboard();
+}
+
+function displayLeaderboard(type) {
+  const leaderboard = JSON.parse(localStorage.getItem(`leaderboard-${type}`) || "[]");
+  const leaderboardBody = document.getElementById("leaderboard-body");
+  
+  leaderboardBody.innerHTML = "";
+  
+  if (leaderboard.length === 0) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="5">No scores yet. Be the first!</td>`;
+    leaderboardBody.appendChild(row);
+    return;
+  }
+  
+  leaderboard.forEach((entry, index) => {
+    const row = document.createElement("tr");
+    row.className = index < 3 ? `rank-${index+1}` : "";
+    
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${entry.name}</td>
+      <td>${entry.score}</td>
+      <td>${['Easy', 'Medium', 'Hard'][entry.difficulty-1]}</td>
+      <td>${entry.date}</td>
+    `;
+    
+    leaderboardBody.appendChild(row);
+  });
+}
+
+// Utility Functions
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+// Initialize the game
+createParticles();
+
+// Toggle on leaderboard screen
+const leaderboardToggle = document.querySelector("#leaderboard .toggle-switch");
+leaderboardToggle.addEventListener("click", function() {
+  const toggleSlider = this.querySelector(".toggle-slider");
+  toggleSlider.classList.toggle("right");
+  const type = toggleSlider.classList.contains("right") ? "sequence" : "card";
+  displayLeaderboard(type);
+});
+
+// Handle sounds
+function enableSounds() {
+  const sounds = [correctSound, wrongSound, matchSound, flipSound, gameOverSound];
+  sounds.forEach(sound => {
+    if (sound) {
+      sound.volume = 0.3;
+      // Create context for mobile
+      const playPromise = sound.play();
+      if (playPromise !== undefined) {
+        playPromise.then(_ => {
+          sound.pause();
+          sound.currentTime = 0;
+        }).catch(error => {
+          // Auto-play was prevented
+          console.log("Audio playback prevented:", error);
         });
       }
     }
-    
-    function startSequenceLevel() {
-      playerSequence = [];
-      sequence = Array.from({ length: sequenceLength }, () =>
-        Math.floor(Math.random() * gridSize * gridSize)
-      );
-      
-      message.textContent = "Watch carefully...";
-      setTimeout(playSequence, 1000);
-    }
-    
-    function playSequence() {
-      let i = 0;
-      const interval = setInterval(() => {
-        if (i < sequence.length) {
-          const button = document.getElementById(`seq-btn-${sequence[i]}`);
-          button.classList.add("active");
-          setTimeout(() => button.classList.remove("active"), lightingSpeed / 2);
-          i++;
-        } else {
-          clearInterval(interval);
-          message.textContent = "Your turn!";
-        }
-      }, lightingSpeed);
-    }
-    
-    function checkSequenceInput(index, button) {
-      const currentStep = playerSequence.length - 1;
-      
-      if (index !== sequence[currentStep]) {
-        wrongSound.play();
-        button.classList.add("wrong");
-        message.textContent = "Wrong! Game over.";
-        setTimeout(() => {
-          button.classList.remove("wrong");
-          calculateSequenceScore();
-          endGame(true);
-        }, 1000);
-        return;
-      }
-      
-      correctSound.play();
-      button.classList.add("correct");
-      setTimeout(() => button.classList.remove("correct"), 300);
-      
-      if (playerSequence.length === sequence.length) {
-        // Level completed
-        sequenceLength++;
-        
-        // Calculate score
-        const basePoints = 100;
-        const timeBonus = Math.max(50 - Math.floor(timer / 3), 0);
-        const difficultyMultiplier = difficulty;
-        const lengthBonus = sequence.length * 10;
-        
-        const pointsEarned = (basePoints + timeBonus + lengthBonus) * difficultyMultiplier;
-        score += pointsEarned;
-        scoreDisplay.textContent = `Score: ${score}`;
-        
-        moves++;
-        movesDisplay.textContent = `Moves: ${moves}`;
-        
-        message.textContent = `Correct! +${pointsEarned} points. Next sequence...`;
-        message.classList.add("pulse");
-        setTimeout(() => message.classList.remove("pulse"), 500);
-        
-        setTimeout(startSequenceLevel, 1500);
-      }
-    }
-    
-    function calculateSequenceScore() {
-      // Final calculation for sequence game
-      const levelBonus = (sequenceLength - (difficulty === 1 ? 3 : difficulty === 2 ? 4 : 5)) * 50;
-      if (levelBonus > 0) {
-        score += levelBonus;
-        scoreDisplay.textContent = `Score: ${score}`;
-      }
-    }
-    
-    // Leaderboard functionality
-    function saveScore() {
-      const playerName = document.getElementById("player-name").value.trim() || "Anonymous";
-      
-      // Get existing leaderboard data
-      let leaderboard = JSON.parse(localStorage.getItem(`leaderboard_${gameType}`) || "[]");
-      
-      // Add new score
-      leaderboard.push({
-        name: playerName,
-        score: score,
-        difficulty: difficulty,
-        moves: moves,
-        time: timer,
-        date: new Date().toLocaleDateString()
-      });
-      
-      // Sort by score (highest first)
-      leaderboard.sort((a, b) => b.score - a.score);
-      
-      // Keep only top 10
-      leaderboard = leaderboard.slice(0, 10);
-      
-      // Save back to localStorage
-      localStorage.setItem(`leaderboard_${gameType}`, JSON.stringify(leaderboard));
-      
-      // Show leaderboard
-      showLeaderboard();
-    }
-    
-    function displayLeaderboard(type) {
-      const leaderboard = JSON.parse(localStorage.getItem(`leaderboard_${type}`) || "[]");
-      const leaderboardBody = document.getElementById("leaderboard-body");
-      
-      leaderboardBody.innerHTML = "";
-      
-      if (leaderboard.length === 0) {
-        const row = document.createElement("tr");
-        row.innerHTML = "<td colspan='5'>No scores yet. Be the first!</td>";
-        leaderboardBody.appendChild(row);
-      } else {
-        leaderboard.forEach((entry, index) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${entry.name}</td>
-            <td>${entry.score}</td>
-            <td>${["Easy", "Medium", "Hard"][entry.difficulty - 1]}</td>
-            <td>${entry.date}</td>
-          `;
-          leaderboardBody.appendChild(row);
-        });
-      }
-    }
-    
-    // Utility functions
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-    
-    // Initialize toggle switches for leaderboard
-    document.querySelector("#leaderboard .toggle-switch").addEventListener("click", function() {
-      const toggleSlider = this.querySelector(".toggle-slider");
-      toggleSlider.classList.toggle("right");
-      displayLeaderboard(toggleSlider.classList.contains("right") ? "sequence" : "card");
-    });
-  </script>
+  });
+}
+
+// Try to enable sounds on user interaction
+document.addEventListener('click', function() {
+  enableSounds();
+}, { once: true });
+</script>
 </body>
 </html>
